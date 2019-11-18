@@ -66,7 +66,7 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
       case (i,cid:CallId) => (i, CallNot(cid::Nil))
     } optionIf (cnd.size <= 1)
     
-    protected def test_impl(cnd: Condition, ictx: Instr, canFail: Bool): Bool = {
+    protected def test_impl(cnd: Condition, ictx: Instr, canFail: Bool, hasToMakeSense: Bool): Bool = {
       //println(s"test [$ictx] $cnd")
       var atLeastOne = false // at least one subcondition could be tested
       var result = true
@@ -87,17 +87,17 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
         // ^ we currently use this because our Condition-s are unordered and so we may test things that should have never been tested
         // TODO perhaps it's better to just use a List or ListMap for Condition
       }
-      assert(atLeastOne, "["+ictx+"] "+show(cnd))
+      if (hasToMakeSense) assert(atLeastOne, "["+ictx+"] "+show(cnd))
       result
     }
     
     /** Must have full context; may crash if `ictx` is only partial. */
     def test_!(cnd: Condition, ictx: Instr): Bool =
-      test_impl(cnd, ictx, false)
+      test_impl(cnd, ictx, false, true)
     
     /** Returns None if some context is missing to determine the truth of the condition. */
-    def test(cnd: Condition, ictx: Instr): Opt[Bool] = 
-      scala.util.control.Breaks tryBreakable[Opt[Bool]] Some((test_impl(cnd, ictx, true))) catchBreak None
+    def test(cnd: Condition, ictx: Instr, hasToMakeSense: Bool = true): Opt[Bool] =
+      scala.util.control.Breaks tryBreakable[Opt[Bool]] Some((test_impl(cnd, ictx, true, hasToMakeSense))) catchBreak None
     // Note: the unprotected version was:
     /*
     def test(cnd: Condition, ictx: Instr): Opt[Bool] = Some {
@@ -613,8 +613,8 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
   object BadComparison extends BadComparison("switch to commented badComparison for a useful message and stack trace")
   BadComparison
   
-  def badComparison(msg: => Str) = throw BadComparison // faster, but no info on failure
-  //def badComparison(msg: Str) = throw new BadComparison(msg) // better diagnostic, but slower
+  //def badComparison(msg: => Str) = throw BadComparison // faster, but no info on failure
+  def badComparison(msg: Str) = throw new BadComparison(msg) // better diagnostic, but slower
   
   sealed abstract class Instr {
     
@@ -622,7 +622,7 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
     //println(s"($this) ; ($that)") thenReturn (
     (this, that) match {
       case (Id, _) => that
-      case (Push(cid, pl, rest), t: TransitiveControl) => Push(cid, pl, rest `;` t)
+      case (Push(cid, pl, rest), t: TransitiveInstr) => Push(cid, pl, rest `;` t)
       case (Push(cid, pl, rest0), rest1) => Push(cid, pl, rest0 `;` rest1)
       case (p @ Pop(rest0), rest1) => Pop(rest0 `;` rest1)(p.originalVar)
       case (d @ Drop(rest0), rest1) => Drop(rest0 `;` rest1)(d.originalCid)
@@ -639,6 +639,10 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
     
     def push(cid: CallId) = this `;` Push(cid,Id,Id)
     
+    def shortString = this match {
+      case Id => ""
+      case _ => s"[$toString]"
+    }
     protected def thenString = this match {
       case Id => ""
       case _ => s";$toString"
@@ -653,26 +657,26 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
     }
   }
   
-  sealed abstract case class Push(cid: CallId, payload: Instr, rest: TransitiveControl) extends TransitiveControl {
+  sealed abstract case class Push(cid: CallId, payload: Instr, rest: TransitiveInstr) extends TransitiveInstr {
   }
   object Push {
-    def apply(cid: CallId, payload: Instr, rest: TransitiveControl): TransitiveControl = new Push(cid, payload, rest){}
+    def apply(cid: CallId, payload: Instr, rest: TransitiveInstr): TransitiveInstr = new Push(cid, payload, rest){}
     def apply(cid: CallId, payload: Instr, rest: Instr): Instr = rest match {
       case p @ Pop(rest2) =>
         if (strictCallIdChecking && cid =/= DummyCallId && cid.v =/= p.originalVar)
-          badComparison(s"${cid.v} === ${p.originalVar} in Push($cid, $payload, $rest)")
+          badComparison(s"${cid.v} =/= ${p.originalVar} in Push($cid, $payload, $rest)")
         payload `;` rest2
       case d @ Drop(rest2) =>
         val baseAssertion = strictCallIdChecking && cid =/= DummyCallId
         // Note that the following assertion is quite drastic, and prevents us from blindly pushing boxes into branches.
         // It would be sufficient to only check cid.v, but I prefer to make assertions as strict as possible.
         if (baseAssertion && cid =/= d.originalCid)
-          badComparison(s"$cid === ${d.originalCid} in Push($cid, $payload, $rest)")
+          badComparison(s"$cid =/= ${d.originalCid} in Push($cid, $payload, $rest)")
         // A less drastic version:
         //if (baseAssertion && cid.v =/= d.originalCid.v)
         //  badComparison(s"${cid.v} === ${d.originalCid.v} in Push($cid, $payload, $rest)")
         rest2
-      case rest: TransitiveControl => apply(cid, payload, rest)
+      case rest: TransitiveInstr => apply(cid, payload, rest)
     }
   }
   case class Pop(rest: Instr)(val originalVar: Var) extends Instr {
@@ -683,14 +687,14 @@ abstract class GraphDefs extends GraphInterpreter { self: GraphIR =>
   }
   case object Drop { def it(originalCid: CallId) = Drop(Id)(originalCid) }
   
-  sealed abstract class TransitiveControl extends Instr {
-    def `;` (that: TransitiveControl): TransitiveControl = (this,that) match {
+  sealed abstract class TransitiveInstr extends Instr {
+    def `;` (that: TransitiveInstr): TransitiveInstr = (this,that) match {
       case (Id,_) => that
       case (_,Id) => this
       case (Push(cid0, pl0, rest0), t) => Push(cid0, pl0, rest0 `;` t)
     }
   }
-  case object Id extends TransitiveControl {
+  case object Id extends TransitiveInstr {
     /** It's sometimes useful to rewire a node to another node, without having to duplicate its Def! */
     def apply(r: NodeRef, recIntros: Int = 0) = Control(Id,r)(recIntros, 0)
   }

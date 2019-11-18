@@ -3,7 +3,7 @@ package graph4
 import squid.utils._
 import scala.collection.mutable
 
-class GraphIR extends GraphDefs {
+class GraphIR(val useNewScheduler: Bool) extends GraphDefs {
   
   val debugScheduling: Bool = false
   //val debugScheduling: Bool = true

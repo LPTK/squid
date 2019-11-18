@@ -11,6 +11,7 @@ abstract class GraphScheduler extends SmartGraphScheduler { self: GraphIR =>
   
   def schedule(mod: GraphModule, naive: Bool = false): Scheduler =
     if (naive) new NaiveScheduler(mod)
+    else if (useNewScheduler) new NewScheduler(mod)
     else new SmartScheduler(mod)
   
   abstract class Scheduler {

@@ -1,0 +1,13 @@
+-- Beta reductions:  7
+-- Incl. one-shot:  2
+-- Case reductions:  0
+-- Field reductions:  0
+-- Case commutings:  0
+module Church where
+  _2II = []λ_13
+    λ_13 = \x'6 -> x_12;					(x3)
+    x_12 = x'6:1 ? [∅]y_15 ¿ x_ε_43;
+    y_15 = y'8:6 ? [∅]λ_13 ¿ y'8;					(x2)
+    x_ε_43 = x'6:2 ? [∅]y_15 ¿ x'6;
+  _2I = [x'2:3↑]λ_c
+    λ_c = \y'3 -> []y'3;

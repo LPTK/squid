@@ -6,8 +6,11 @@ import ammonite.ops._
 
 class TestHarness {
   
+  val useNewScheduler = true
+  //val useNewScheduler = false
+  
   val dumpFolder = pwd/'haskellopt/'target/'dump
-  val genFolder = pwd/'haskellopt_gen2
+  val genFolder = if (useNewScheduler) pwd/'haskellopt_gen3 else pwd/'haskellopt_gen2
   
   val sanityCheckFuel = 20
   //val sanityCheckFuel = 100
@@ -23,7 +26,7 @@ class TestHarness {
   
   
   def mkGraph =
-    new GraphIR
+    new GraphIR(useNewScheduler)
   
   def pipeline(filePath: Path, compileResult: Bool, executeResult: Bool, dumpGraph: Bool, checks: Seq[CheckDSL], interpret: Bool, schedule: Bool, prefixFilter: Str): Unit = {
     
@@ -277,7 +280,8 @@ class TestHarness {
       val execPath = genFolder/RelPath(testName+s".pass-$idxStr.opt")
       if (exists(execPath)) os.remove(execPath)
       pipeline(dumpFolder/(testName+s".pass-$idxStr.cbor"),
-        compileResult, executeResult, dumpGraph && (idxStr === "0000"), checks, interpret = exec, schedule = schedule, prefixFilter = prefixFilter)
+        compileResult, compileResult && executeResult,
+        dumpGraph && (idxStr === "0000"), checks, interpret = exec, schedule = schedule, prefixFilter = prefixFilter)
       if (compileResult && exec) %%(execPath)(pwd)
     }
     

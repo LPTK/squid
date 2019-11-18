@@ -7,6 +7,8 @@ class InterpTests extends FunSuite {
   object TestHarness extends TestHarness
   import CheckDSL.check
   
+  // TODO recover the simple PE'd programs we had with old scheduling, and not these big flag-filled monstrosities
+  
   test("InterpSimple") (
     // TODO test version with two params and a param cycle (graph used to diverge)
     TestHarness("InterpSimple",

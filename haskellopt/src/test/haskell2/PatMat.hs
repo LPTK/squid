@@ -23,6 +23,8 @@ f0'1 = f0 Nothing
 f0'2 = f0 (f0 (Just 3))
 f0'3 = f0 (f0 Nothing)
 f0'4 x = f0 (f0 x)
+-- f0'5 = (f0 (Just 2), f0 Nothing)
+-- f0'6 = (f0'0, f0'1)
 
 orZero :: Maybe Integer -> Integer
 orZero (Just x) = x

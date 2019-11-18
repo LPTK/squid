@@ -4,7 +4,7 @@ import squid.utils._
 
 import scala.collection.mutable
 
-abstract class SmartGraphScheduler { self: GraphIR =>
+abstract class SmartGraphScheduler extends NewGraphScheduler { self: GraphIR =>
   
   import ScheduleDebug.{debug=>Sdebug}
   
