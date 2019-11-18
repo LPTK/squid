@@ -39,8 +39,8 @@ lam'2 = \m -> map (lam'3 False False m)
 max_mod = lam'2
 
 call' y' x' z = 
-  let t = (call'2 True False y' z (let (:) _ arg = undefined in arg) undefined) in
-  case x' > t of { True -> x'; False -> t }
+  let ret = (call'2 True False y' z (let (:) _ arg = undefined in arg) undefined) in
+  case x' > ret of { True -> x'; False -> ret }
 
 lam'4 x'2 y'2 = \z' -> (call' y'2 x'2 z')
 
@@ -57,8 +57,8 @@ lam'7 = \x'3 -> (lam x'3)
 call'5 _0 x'4 y'3 = (call' y'3 x'4 _0)
 
 lam'3 flag_m flag_m' m' = \v'2 -> let
-  _2 = mod v'2 (5::Int)
   _1 = mod v'2 (10::Int)
+  _2 = mod v'2 (5::Int)
   in case flag_m' of { True -> (call' v'2 _1 _2); False -> (case flag_m of { True -> (call'6 _2 v'2 _1); False -> m' _1 v'2 _2 }) }
 
 main = 
@@ -74,17 +74,17 @@ call'6 _5 y'5 x'6 = case x'6 > y'5 of { True -> (case x'6 > _5 of { True -> x'6;
 lam'6 = \x'7 -> (lam'8 x'7)
 
 call'2 flag_ds flag_ds_ds y'6 z'2 _fε z'3 = let
+  ret = (call'2 False flag_ds undefined undefined (let (:) _ arg = _fε in arg) z'2)
+  _fε' = case flag_ds of { True -> ret; False -> ret }
   π = case flag_ds_ds of { True -> z'3; False -> (case flag_ds of { True -> y'6; False -> (let (:) arg _ = _fε in arg) }) }
-  t' = (call'2 False flag_ds undefined undefined (let (:) _ arg = _fε in arg) z'2)
-  _fε' = case flag_ds of { True -> t'; False -> t' }
   ψ = case π > _fε' of { True -> π; False -> _fε' }
   in case flag_ds_ds of { True -> π; False -> (case flag_ds of { True -> ψ; False -> (case (let (:) _ arg = _fε in arg) of { (:) ρ ρ' -> ψ; [] -> π }) }) }
 
 k = GHC.Enum.enumFromTo (0::Int) ((1000::Int) * (1000::Int))
 
 lam'5 = \ds -> 
-  let t'2 = (call'2 False False undefined undefined (let (:) _ arg = ds in arg) undefined) in
-  case ds of { (:) ρ'2 ρ'3 -> Just (case ρ'3 of { (:) ρ'4 ρ'5 -> (case ρ'2 > t'2 of { True -> ρ'2; False -> t'2 }); [] -> ρ'2 }); [] -> Nothing }
+  let ret = (call'2 False False undefined undefined (let (:) _ arg = ds in arg) undefined) in
+  case ds of { (:) ρ'2 ρ'3 -> Just (case ρ'3 of { (:) ρ'4 ρ'5 -> (case ρ'2 > ret of { True -> ρ'2; False -> ret }); [] -> ρ'2 }); [] -> Nothing }
 
 max3_manual = lam'7
 

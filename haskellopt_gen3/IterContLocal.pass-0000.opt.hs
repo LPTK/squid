@@ -22,9 +22,10 @@ import GHC.List
 import GHC.Num
 import GHC.Types
 
-lam flag_f flag_f_f f' f'2 f'3 = \state -> 
-  let λ = sel2 (call'2 flag_f f'2 f') in
-  case flag_f_f of { True -> (call state λ); False -> (case flag_f of { True -> (call' flag_f state (sel4 (call'2 flag_f f'2 f')) (sel3 (call'2 flag_f f'2 f')) (sel1 (call'2 flag_f f'2 f'))); False -> f'3 λ state }) }
+lam flag_f flag_f_f f' f'2 f'3 = \state -> let
+  ret = (call'2 flag_f f'2 f')
+  λ = sel2 ret
+  in case flag_f_f of { True -> (call state λ); False -> (case flag_f of { True -> (call' flag_f state (sel4 ret) (sel3 ret) (sel1 ret)); False -> f'3 λ state }) }
 
 call'3 = (call'4 (0::Int))
 
@@ -36,13 +37,17 @@ call'5 λ' = (,) undefined λ'
 
 call' flag_f' state'2 f'4 f'5 f'6 = state'2 : (call'6 flag_f' (state'2 + (1::Int)) f'5 f'4 f'6)
 
-nats0 = (call'7 (sel1 (call'5 lam')) (sel2 (call'5 lam')))
+nats0 = 
+  let ret' = (call'5 lam') in
+  (call'7 (sel1 ret') (sel2 ret'))
 
 call'8 λ'2 = λ'2
 
 call'9 state'3 = (call'4 state'3)
 
-call'7 f'7 f'8 = (call' True (0::Int) (sel4 (call'2 True f'8 f'7)) (sel3 (call'2 True f'8 f'7)) (sel1 (call'2 True f'8 f'7)))
+call'7 f'7 f'8 = 
+  let ret = (call'2 True f'8 f'7) in
+  (call' True (0::Int) (sel4 ret) (sel3 ret) (sel1 ret))
 
 lam'2 flag_f'2 flag_k f'9 k'2 f'10 f'11 = \s -> 
   let _0 = s + (1::Int) in

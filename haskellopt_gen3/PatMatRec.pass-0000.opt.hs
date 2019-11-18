@@ -34,9 +34,10 @@ call'2 = sel1 (call'3 True False undefined undefined)
 
 t1'2 = call'2
 
-call' = 
-  let _0 = (0::Int) - (1::Int) in
-  (,,) _0 (_0 : sel2 (call'4 (1::Int) (0::Int))) (sel1 (call'4 (1::Int) (0::Int)))
+call' = let
+  _0 = (0::Int) - (1::Int)
+  ret = (call'4 (1::Int) (0::Int))
+  in (,,) _0 (_0 : sel2 ret) (sel1 ret)
 
 lam' = \ds' -> case ds' of { (:) ρ'2 ρ'3 -> (case ρ'3 of { (:) ρ'4 ρ'5 -> (case ρ'5 of { [] -> ρ'2 - ρ'4; _ -> (666::Int) }) : (case ρ'5 of { [] -> sel2 (call'4 ρ'4 ρ'2); _ -> [] }); _ -> call'5 }); _ -> call'6 }
 
@@ -84,8 +85,8 @@ call'13 = call
 
 call'3 flag_xs flag_xs' x'2 xs' = let
   _fε = case flag_xs of { True -> (0::Int); False -> (case flag_xs' of { True -> x'2; False -> (let (:) arg _ = xs' in arg) }) }
-  _cε' = (call'8 (_fε + (1::Int)))
-  _cε = (case flag_xs' of { True -> _fε; False -> (case flag_xs of { True -> _fε; False -> (case (let (:) _ arg = xs' in arg) of { [] -> _fε; _ -> (666::Int) }) }) }) : (case flag_xs' of { True -> _cε'; False -> (case flag_xs of { True -> _cε'; False -> (case (let (:) _ arg = xs' in arg) of { [] -> _cε'; _ -> [] }) }) })
+  ret' = (call'8 (_fε + (1::Int)))
+  _cε = (case flag_xs' of { True -> _fε; False -> (case flag_xs of { True -> _fε; False -> (case (let (:) _ arg = xs' in arg) of { [] -> _fε; _ -> (666::Int) }) }) }) : (case flag_xs' of { True -> ret'; False -> (case flag_xs of { True -> ret'; False -> (case (let (:) _ arg = xs' in arg) of { [] -> ret'; _ -> [] }) }) })
   in (,) _cε (case flag_xs of { True -> _cε; False -> (case flag_xs' of { True -> _cε; False -> (case xs' of { (:) ρ'20 ρ'21 -> _cε; _ -> call'11 }) }) })
 
 t1'1 = lam'4

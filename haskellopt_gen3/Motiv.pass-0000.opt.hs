@@ -32,8 +32,8 @@ call ψ π = π * ψ
 call' ψ' = ψ' + (1::Int)
 
 lam' = \x -> 
-  let ψ'2 = (call'2 False False x) in
-  case x of { Just ρ -> ρ * ψ'2; Nothing -> (call' ψ'2) }
+  let ret = (call'2 False False x) in
+  case x of { Just ρ -> ρ * ret; Nothing -> (call' ret) }
 
 isJust = lam'2
 

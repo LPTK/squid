@@ -40,9 +40,10 @@ simple5 = call'2
 
 call'3 start' _5 _6 = sel3 (call'4 False False False True False False start' undefined undefined _5 undefined _6)
 
-call'4 flag_k_x flag_k_x' flag_x flag_x' flag_x'2 flag_k start'2 x'5 x'6 x'7 x'8 _7 = 
-  let π'3 = case flag_k_x' of { True -> sel1 (call False False False flag_x flag_x' flag_x'2 False False _7 x'6 undefined undefined undefined x'5); False -> (case flag_k of { True -> sel2 (call False False False flag_x flag_x' flag_x'2 False False _7 x'6 undefined undefined undefined x'5); False -> undefined }) } in
-  (,,) (case (call'5 x'7) of { True -> undefined; False -> π'3 }) (case flag_k_x' of { True -> π'3; False -> (case flag_k of { True -> π'3; False -> (case flag_k_x of { True -> undefined; False -> undefined }) }) }) (case (call' False False False flag_x flag_x' flag_x'2 False False undefined x'8 undefined undefined start'2) of { True -> undefined; False -> π'3 })
+call'4 flag_k_x flag_k_x' flag_x flag_x' flag_x'2 flag_k start'2 x'5 x'6 x'7 x'8 _7 = let
+  ret = (call False False False flag_x flag_x' flag_x'2 False False _7 x'6 undefined undefined undefined x'5)
+  π'3 = case flag_k_x' of { True -> sel1 ret; False -> (case flag_k of { True -> sel2 ret; False -> undefined }) }
+  in (,,) (case (call'5 x'7) of { True -> undefined; False -> π'3 }) (case flag_k_x' of { True -> π'3; False -> (case flag_k of { True -> π'3; False -> (case flag_k_x of { True -> undefined; False -> undefined }) }) }) (case (call' False False False flag_x flag_x' flag_x'2 False False undefined x'8 undefined undefined start'2) of { True -> undefined; False -> π'3 })
 
 call'5 x'9 = x'9 > (0::Int)
 

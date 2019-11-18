@@ -27,15 +27,17 @@ length_mine = lam
 lam = \ds -> case ds of { (:) ρ ρ' -> (call False undefined ρ' undefined) + (1::Int); [] -> (0::Int) }
 
 call' from to = let
-  _0 = from + (1::Int)
-  _1 = from > to
-  in (,,,) (case _1 of { True -> []; False -> from : sel1 (call'2 _0 to) }) _1 (sel2 (call'2 _0 to)) (sel3 (call'2 _0 to))
+  ret = (call'2 (from + (1::Int)) to)
+  _0 = from > to
+  in (,,,) (case _0 of { True -> []; False -> from : sel1 ret }) _0 (sel2 ret) (sel3 ret)
 
-call'3 from' = (,,) (sel4 (call' from' (5::Int))) (sel2 (call' from' (5::Int))) (sel3 (call' from' (5::Int)))
+call'3 from' = 
+  let ret' = (call' from' (5::Int)) in
+  (,,) (sel4 ret') (sel2 ret') (sel3 ret')
 
-call flag_ds _2 _cfε _3 = 
-  let _4 = (call False undefined (case flag_ds of { True -> _3; False -> (let (:) _ arg = _cfε in arg) }) undefined) + (1::Int) in
-  case flag_ds of { True -> (case _2 of { True -> (0::Int); False -> _4 }); False -> (case _cfε of { (:) ρ'2 ρ'3 -> _4; [] -> (0::Int) }) }
+call flag_ds _1 _cfε _2 = 
+  let _3 = (call False undefined (case flag_ds of { True -> _2; False -> (let (:) _ arg = _cfε in arg) }) undefined) + (1::Int) in
+  case flag_ds of { True -> (case _1 of { True -> (0::Int); False -> _3 }); False -> (case _cfε of { (:) ρ'2 ρ'3 -> _3; [] -> (0::Int) }) }
 
 enumFromTo_mine = lam'
 
@@ -45,11 +47,13 @@ call'4 = (0::Int)
 
 lam' = \from'3 -> (lam'2 from'3)
 
-call'2 _5 to'2 = let
-  ψ = sel1 (call'2 (_5 + (1::Int)) to'2)
-  _6 = _5 > to'2
-  in (,,) (case _6 of { True -> []; False -> _5 : ψ }) ψ _6
+call'2 _4 to'2 = let
+  ψ = sel1 (call'2 (_4 + (1::Int)) to'2)
+  _5 = _4 > to'2
+  in (,,) (case _5 of { True -> []; False -> _4 : ψ }) ψ _5
 
-test = (call'5 (sel3 (call'3 (0::Int))) (sel2 (call'3 (0::Int))) (sel1 (call'3 (0::Int))))
+test = 
+  let ret'2 = (call'3 (0::Int)) in
+  (call'5 (sel3 ret'2) (sel2 ret'2) (sel1 ret'2))
 
-call'5 _7 _8 _9 = case _8 of { True -> (0::Int); False -> (call True _9 (let (:) _ arg = undefined in arg) _7) + (1::Int) }
+call'5 _6 _7 _8 = case _7 of { True -> (0::Int); False -> (call True _8 (let (:) _ arg = undefined in arg) _6) + (1::Int) }

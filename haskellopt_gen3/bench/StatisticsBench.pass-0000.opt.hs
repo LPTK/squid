@@ -44,13 +44,13 @@ call'2 π' = π'
 lam' = \ds -> case ds of { (:) ρ'2 ρ'3 -> Just (call'3 ρ'3 ρ'2); [] -> Nothing }
 
 lam = \ds' -> 
-  let t = (call'4 (let (:) _ arg = ds' in arg)) in
-  case ds' of { (:) ρ'4 ρ'5 -> Just (case ρ'5 of { (:) ρ'6 ρ'7 -> (case ρ'4 > t of { True -> ρ'4; False -> t }); [] -> ρ'4 }); [] -> Nothing }
+  let ret = (call'4 (let (:) _ arg = ds' in arg)) in
+  case ds' of { (:) ρ'4 ρ'5 -> Just (case ρ'5 of { (:) ρ'6 ρ'7 -> (case ρ'4 > ret of { True -> ρ'4; False -> ret }); [] -> ρ'4 }); [] -> Nothing }
 
 call'3 π'2 x' = case π'2 of { (:) ρ'8 ρ'9 -> (call' ρ'9 (case ρ'8 > x' of { True -> ρ'8; False -> x' })); [] -> x' }
 
 maxMaybe = lam
 
 call'4 π'3 = 
-  let t' = (call'4 (let (:) _ arg = π'3 in arg)) in
-  case (let (:) _ arg = π'3 in arg) of { (:) ρ'10 ρ'11 -> (case (let (:) arg _ = π'3 in arg) > t' of { True -> (let (:) arg _ = π'3 in arg); False -> t' }); [] -> (let (:) arg _ = π'3 in arg) }
+  let ret = (call'4 (let (:) _ arg = π'3 in arg)) in
+  case (let (:) _ arg = π'3 in arg) of { (:) ρ'10 ρ'11 -> (case (let (:) arg _ = π'3 in arg) > ret of { True -> (let (:) arg _ = π'3 in arg); False -> ret }); [] -> (let (:) arg _ = π'3 in arg) }

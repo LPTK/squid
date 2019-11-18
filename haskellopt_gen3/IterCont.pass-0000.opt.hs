@@ -51,8 +51,8 @@ nats0 = (call'6 (call'4 lam'4))
 call'6 k'2 = (0::Int) : (call'3 ((0::Int) + (1::Int)) k'2)
 
 call'2 flag_f' state' f'4 λ'3 = 
-  let _2 = (call'7 flag_f' state' λ'3 f'4) in
-  (,) _2 (case flag_f' of { True -> _2; False -> f'4 λ'3 state' })
+  let ret = (call'7 flag_f' state' λ'3 f'4) in
+  (,) ret (case flag_f' of { True -> ret; False -> f'4 λ'3 state' })
 
 lam'3 = \f -> (lam'2 False f)
 
@@ -61,16 +61,17 @@ call'7 flag_f'2 st λ'4 f'5 = st : (call'8 flag_f'2 (st + (1::Int)) f'5 λ'4)
 lam' flag_f'3 f'6 λ'5 = \st' -> case flag_f'3 of { True -> (call'7 flag_f'3 st' λ'5 f'6); False -> f'6 λ'5 st' }
 
 lam'5 flag_f'_k k'3 k'4 = \s -> 
-  let _3 = s + (1::Int) in
-  s : (case flag_f'_k of { True -> (call'3 _3 k'4); False -> k'3 _3 })
+  let _2 = s + (1::Int) in
+  s : (case flag_f'_k of { True -> (call'3 _2 k'4); False -> k'3 _2 })
 
 nats1_5 = GHC.List.take (5::Int) (call' undefined)
 
-call'8 flag_f'4 _4 f'7 λ'6 = case flag_f'4 of { True -> (call'7 flag_f'4 _4 λ'6 f'7); False -> f'7 λ'6 _4 }
+call'8 flag_f'4 _3 f'7 λ'6 = case flag_f'4 of { True -> (call'7 flag_f'4 _3 λ'6 f'7); False -> f'7 λ'6 _3 }
 
-call flag_f' f'8 f'9 = 
-  let _5 = sel1 (call False f'8 f'8) in
-  (,) (case flag_f' of { True -> sel2 (call'5 _5); False -> f'9 _5 }) (sel1 (call'5 _5))
+call flag_f' f'8 f'9 = let
+  _4 = sel1 (call False f'8 f'8)
+  ret' = (call'5 _4)
+  in (,) (case flag_f' of { True -> sel2 ret'; False -> f'9 _4 }) (sel1 ret')
 
 nats0_5 = GHC.List.take (5::Int) (call'6 (call'4 lam'4))
 

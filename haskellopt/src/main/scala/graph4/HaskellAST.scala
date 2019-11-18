@@ -86,7 +86,7 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     def map(f: Expr => Expr): Defn = new Defn(ide, params, Lazy(body.map(f)))
     
     def inline(args: List[Expr]) = {
-      assert(params.size === args.size)
+      require(params.size === args.size)
       //assert(!isRecursive)
       val res = (params,args).zipped.foldRight(body) { case ((p,a),acc) => Let(p,a,acc,true) }
       res

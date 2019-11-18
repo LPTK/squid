@@ -60,12 +60,14 @@ abstract class NewGraphScheduler { self: GraphIR =>
     class Scope(val cid: CallId, val payload: Instr, name: Str, lambdaBound: Opt[Var]) {
       val push = Push(cid, payload, Id)
       val ident = AST.mkIdent(name)
+      val callIdent = AST.mkIdent("ret")
       
       // To be filled in during processing:
       var params = mutable.Set.empty[IRef]
       var captures = mutable.Set.empty[IRef]
       var returns = mutable.Set.empty[IRef]
       var parents = mutable.SortedSet.empty[Scope]
+      var called = mutable.SortedSet.empty[Scope]
       
       val idents: mutable.Map[IRef, AST.Ident] = mutable.Map.empty
       def toIdent(iref: IRef): AST.Ident = idents.getOrElseUpdate(iref, AST.mkIdent(iref._2.name.getOrElse("t")))
@@ -98,11 +100,13 @@ abstract class NewGraphScheduler { self: GraphIR =>
         }
       }
       case class Lambda(v: Var, scp: Scope) extends Scheduled {
+        assert(scp.returns.size === 1)
+        lazy val call = new Call(scp, scp.returns.head).toExpr
         def toExpr: AST.Expr = {
           assert(scp.returns.size === 1)
-          Call(scp, scp.returns.head).toExpr
+          call
         }
-        override def str(indent: Int) = s"\\${v|>printVar} @ ${v} -> ${Call(scp, scp.returns.head).str(indent)}"
+        override def str(indent: Int) = s"\\${v|>printVar} @ $v -> $call"
       }
       case class NonLocalBranch(flag: Var, thn: IRef, els: IRef) extends Scheduled {
         def toExpr: AST.Expr =
@@ -112,7 +116,8 @@ abstract class NewGraphScheduler { self: GraphIR =>
         def toExpr: AST.Expr =
           AST.Inline(s"undefined") // TODO make it s"error ${reason}"
       }
-      case class Call(scp: Scope, iref: IRef) extends Scheduled {
+      class Call(val scp: Scope, val iref: IRef) extends Scheduled {
+        called += scp
         private def mkSelection(scp: Scope, prefix: AST.Expr, idx: Int) = {
           if (scopeAccessMethod === ScopeAccessMethod.Lens) {
             usesLenses = true
@@ -125,14 +130,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
           else AST.CtorField(prefix, scp.returnsTupleCtor, scp.returns.size, idx)
         }
         def toExpr: AST.Expr = {
-          val flArgs = scp.flagParams.valuesIterator.map(flagArgs).toList
-          val normalArgs = (
-            scp.params.iterator.map(scp.toArg).map(toVari) ++
-            //scp.params.iterator.map(p => orUndefined(scp.toArg(p)|>toVari) ++
-            scp.captures.iterator.map(scp.toCaptureArg).map(toVari)
-            //scp.captures.iterator.map(p => orUndefined(scp.toCaptureArg(p)|>toVari))
-          ).toList
-          val call = AST.Call(Lazy(scp.toDefn), flArgs ::: normalArgs) // FIXME don't actually call each time! let-bind it
+          val call = AST.Vari(scp.callIdent)
           scp.returns.toList match {
             case Nil => die
             case _ :: Nil => call
@@ -184,7 +182,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
               scp.parents += this
               updateArguments(scp)
               scp.processRec(rest, ref)
-              Some(Call(scp, rest->ref))
+              Some(new Call(scp, rest->ref))
             case d @ Drop(rest) =>
               //assert(d.originalCid === cid)
               if (d.originalCid =/= cid) Some(Undefined) else {
@@ -305,13 +303,25 @@ abstract class NewGraphScheduler { self: GraphIR =>
         val flParams = flagParams.valuesIterator.map(AST.Vari).toList
         new AST.Defn(ident, flParams ++ (params.iterator ++ captures.iterator).map(toVari), Lazy {
           val body = scheduled.iterator.map { case (iref, sch) => Left(toVari(iref),sch.toExpr) }.toList
+          val bodyWithCalls = called.foldRight(body) {
+            case (scp, body) =>
+              val flArgs = scp.flagParams.valuesIterator.map(flagArgs).toList
+              val normalArgs = (
+                scp.params.iterator.map(scp.toArg).map(toVari) ++
+                //scp.params.iterator.map(p => orUndefined(scp.toArg(p)|>toVari) ++
+                scp.captures.iterator.map(scp.toCaptureArg).map(toVari)
+                //scp.captures.iterator.map(p => orUndefined(scp.toCaptureArg(p)|>toVari))
+              ).toList
+              val call = AST.Call(Lazy(scp.toDefn), flArgs ::: normalArgs)
+              Left(AST.Vari(scp.callIdent), call) :: body
+          }
           val ret = returns.iterator.toList match {
             case Nil => die
             case iref :: Nil => toVari(iref)
             case _ => returns.foldLeft[AST.Expr](AST.Inline(returnsTupleCtor)) {
               case (app, iref) => AST.App(app, toVari(iref)) }
           }
-          val bodyExpr = AST.Let.reorder(body, ret)
+          val bodyExpr = AST.Let.reorder(bodyWithCalls, ret)
           lambdaBound.fold[AST.Expr](bodyExpr)(v => AST.Lam(AST.Vari(v), Nil, bodyExpr))
         })
       }

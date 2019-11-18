@@ -25,7 +25,9 @@ map_m = lam
 
 lam = \f -> (lam' False f)
 
-call ls f' = (,,,) (sel3 (call' True (let (:) _ arg = ls in arg) f')) (let (:) _ arg = ls in arg) (sel1 (call' True (let (:) _ arg = ls in arg) f')) ((let (:) arg _ = ls in arg) + (1::Int))
+call ls f' = 
+  let ret = (call' True (let (:) _ arg = ls in arg) f') in
+  (,,,) (sel3 ret) (let (:) _ arg = ls in arg) (sel1 ret) ((let (:) arg _ = ls in arg) + (1::Int))
 
 call'2 flag_ds π _0 t _cfε = 
   let _1 = (case flag_ds of { True -> t; False -> (let (:) arg _ = _cfε in arg) }) + (call'2 False undefined undefined undefined (case flag_ds of { True -> _0; False -> (let (:) _ arg = _cfε in arg) })) in
@@ -37,7 +39,9 @@ lam'2 = \ds -> case ds of { (:) ρ'4 ρ'5 -> ρ'4 + (call'2 False undefined unde
 
 call'3 = undefined
 
-lam'3 = \ls' -> (call'4 (sel2 (call ls' undefined)) (sel1 (call ls' undefined)) (sel4 (call ls' undefined)) (sel3 (call ls' undefined)) ls')
+lam'3 = \ls' -> 
+  let ret' = (call ls' undefined) in
+  (call'4 (sel2 ret') (sel1 ret') (sel4 ret') (sel3 ret') ls')
 
 lam' flag_f f'2 = \ds' -> case ds' of { (:) ρ'6 ρ'7 -> (case flag_f of { True -> ρ'6 + (1::Int); False -> f'2 ρ'6 }) : sel2 (call' flag_f ρ'7 f'2); [] -> [] }
 

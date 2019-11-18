@@ -31,20 +31,28 @@ src = (0::Int) : ((2::Int) : [])
 
 call _0 = _0
 
-call' ds' x = case (0::Int) == (0::Int) of { True -> (call'2 False False True False False False ((0::Int) + (1::Int)) (sel3 (call'3 (let (:) _ arg = ds' in arg))) (sel1 (call'3 (let (:) _ arg = ds' in arg))) (sel2 (call'3 (let (:) _ arg = ds' in arg))) (x + (1::Int))); False -> (case (0::Int) == (2::Int) of { True -> (case x > (0::Int) of { True -> (call'4 (0::Int) undefined x); False -> (call'5 False False True False False False (0::Int) (sel3 (call'6 (let (:) _ arg = ds' in arg))) (sel1 (call'6 (let (:) _ arg = ds' in arg))) (sel2 (call'6 (let (:) _ arg = ds' in arg))) x) }); False -> call'7 }) }
+call' ds' x = let
+  ret = (call'2 (let (:) _ arg = ds' in arg))
+  ret' = (call'7 (let (:) _ arg = ds' in arg))
+  in case (0::Int) == (0::Int) of { True -> (call'3 False False True False False False ((0::Int) + (1::Int)) (sel3 ret') (sel1 ret') (sel2 ret') (x + (1::Int))); False -> (case (0::Int) == (2::Int) of { True -> (case x > (0::Int) of { True -> (call'4 (0::Int) undefined x); False -> (call'5 False False True False False False (0::Int) (sel3 ret) (sel1 ret) (sel2 ret) x) }); False -> call'6 }) }
 
-call'3 _fε = (,,) _fε _fε _fε
+call'7 _fε = (,,) _fε _fε _fε
 
-call'8 = call'7
+call'8 = call'6
 
 call'5 flag_ds_ds flag_ds_ds' flag_ds flag_ds_ds'2 flag_ds' flag_ds_ds'3 y ds'2 ds'3 ds'4 x' = let
   _fε' = case flag_ds of { True -> (2::Int); False -> (case flag_ds' of { True -> (2::Int); False -> (let (:) arg _ = ds'4 in arg) }) }
-  ψ = case _fε' == (0::Int) of { True -> (call'2 flag_ds' False False False False flag_ds (y + (1::Int)) (sel3 (call'3 (let (:) _ arg = ds'3 in arg))) (sel1 (call'3 (let (:) _ arg = ds'3 in arg))) (sel2 (call'3 (let (:) _ arg = ds'3 in arg))) (x' + (1::Int))); False -> (case _fε' == (2::Int) of { True -> (case x' > (0::Int) of { True -> (call'4 y undefined x'); False -> (call'5 False flag_ds' False flag_ds False False y (sel3 (call'6 (let (:) _ arg = ds'3 in arg))) (sel1 (call'6 (let (:) _ arg = ds'3 in arg))) (sel2 (call'6 (let (:) _ arg = ds'3 in arg))) x') }); False -> call'7 }) }
+  ret' = (call'7 (let (:) _ arg = ds'3 in arg))
+  ret = (call'2 (let (:) _ arg = ds'3 in arg))
+  ψ = case _fε' == (0::Int) of { True -> (call'3 flag_ds' False False False False flag_ds (y + (1::Int)) (sel3 ret') (sel1 ret') (sel2 ret') (x' + (1::Int))); False -> (case _fε' == (2::Int) of { True -> (case x' > (0::Int) of { True -> (call'4 y undefined x'); False -> (call'5 False flag_ds' False flag_ds False False y (sel3 ret) (sel1 ret) (sel2 ret) x') }); False -> call'6 }) }
   in case flag_ds_ds'2 of { True -> y; False -> (case flag_ds of { True -> ψ; False -> (case flag_ds_ds' of { True -> y; False -> (case flag_ds_ds'3 of { True -> y; False -> (case flag_ds' of { True -> ψ; False -> (case flag_ds_ds of { True -> y; False -> (case ds'2 of { (:) ρ ρ' -> ψ; [] -> y }) }) }) }) }) }) }
 
-call'6 _fε'2 = (,,) _fε'2 _fε'2 _fε'2
+call'2 _fε'2 = (,,) _fε'2 _fε'2 _fε'2
 
-call'4 y' ds'5 x'2 = case (0::Int) == (0::Int) of { True -> (call'2 False False False False True False (y' + (1::Int)) (sel3 (call'3 (let (:) _ arg = ds'5 in arg))) (sel1 (call'3 (let (:) _ arg = ds'5 in arg))) (sel2 (call'3 (let (:) _ arg = ds'5 in arg))) (x'2 + (1::Int))); False -> (case (0::Int) == (2::Int) of { True -> (case x'2 > (0::Int) of { True -> (call'4 y' undefined x'2); False -> (call'5 False False False False True False y' (sel3 (call'6 (let (:) _ arg = ds'5 in arg))) (sel1 (call'6 (let (:) _ arg = ds'5 in arg))) (sel2 (call'6 (let (:) _ arg = ds'5 in arg))) x'2) }); False -> call'7 }) }
+call'4 y' ds'5 x'2 = let
+  ret' = (call'7 (let (:) _ arg = ds'5 in arg))
+  ret = (call'2 (let (:) _ arg = ds'5 in arg))
+  in case (0::Int) == (0::Int) of { True -> (call'3 False False False False True False (y' + (1::Int)) (sel3 ret') (sel1 ret') (sel2 ret') (x'2 + (1::Int))); False -> (case (0::Int) == (2::Int) of { True -> (case x'2 > (0::Int) of { True -> (call'4 y' undefined x'2); False -> (call'5 False False False False True False y' (sel3 ret) (sel1 ret) (sel2 ret) x'2) }); False -> call'6 }) }
 
 k = negate ((1000::Int) * (100::Int))
 
@@ -58,14 +66,16 @@ call'12 x'5 = x'5
 
 lam = \x'6 -> (call' undefined x'6)
 
-call'2 flag_ds_ds'4 flag_ds_ds'5 flag_ds'2 flag_ds_ds'6 flag_ds'3 flag_ds_ds'7 _1 ds'6 ds'7 ds'8 x'7 = let
+call'3 flag_ds_ds'4 flag_ds_ds'5 flag_ds'2 flag_ds_ds'6 flag_ds'3 flag_ds_ds'7 _1 ds'6 ds'7 ds'8 x'7 = let
   _fε'3 = case flag_ds'2 of { True -> (2::Int); False -> (case flag_ds'3 of { True -> (2::Int); False -> (let (:) arg _ = ds'8 in arg) }) }
-  ψ' = case _fε'3 == (0::Int) of { True -> (call'2 False flag_ds'2 False flag_ds'3 False False (_1 + (1::Int)) (sel3 (call'3 (let (:) _ arg = ds'7 in arg))) (sel1 (call'3 (let (:) _ arg = ds'7 in arg))) (sel2 (call'3 (let (:) _ arg = ds'7 in arg))) (x'7 + (1::Int))); False -> (case _fε'3 == (2::Int) of { True -> (case x'7 > (0::Int) of { True -> (call'4 _1 undefined x'7); False -> (call'5 flag_ds'2 False False False False flag_ds'3 _1 (sel3 (call'6 (let (:) _ arg = ds'7 in arg))) (sel1 (call'6 (let (:) _ arg = ds'7 in arg))) (sel2 (call'6 (let (:) _ arg = ds'7 in arg))) x'7) }); False -> call'7 }) }
+  ret = (call'2 (let (:) _ arg = ds'7 in arg))
+  ret' = (call'7 (let (:) _ arg = ds'7 in arg))
+  ψ' = case _fε'3 == (0::Int) of { True -> (call'3 False flag_ds'2 False flag_ds'3 False False (_1 + (1::Int)) (sel3 ret') (sel1 ret') (sel2 ret') (x'7 + (1::Int))); False -> (case _fε'3 == (2::Int) of { True -> (case x'7 > (0::Int) of { True -> (call'4 _1 undefined x'7); False -> (call'5 flag_ds'2 False False False False flag_ds'3 _1 (sel3 ret) (sel1 ret) (sel2 ret) x'7) }); False -> call'6 }) }
   in case flag_ds_ds'6 of { True -> _1; False -> (case flag_ds'2 of { True -> ψ'; False -> (case flag_ds_ds'5 of { True -> _1; False -> (case flag_ds'3 of { True -> ψ'; False -> (case flag_ds_ds'7 of { True -> _1; False -> (case flag_ds_ds'4 of { True -> _1; False -> (case ds'6 of { (:) ρ'2 ρ'3 -> ψ'; [] -> _1 }) }) }) }) }) }) }
 
 call'13 = undefined
 
-call'7 = call'7
+call'6 = call'6
 
 main = Criterion.Main.defaultMain (Criterion.Measurement.Types.bgroup (GHC.CString.unpackCString# "interp"#) ((Criterion.Measurement.Types.bench (GHC.CString.unpackCString# "normal"#) $ Criterion.Measurement.Types.whnf lam (negate ((1000::Int) * (100::Int)))) : []) : [])
 

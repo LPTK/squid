@@ -36,8 +36,8 @@ call'2 = id (lam'2 id)
 call f'2 = (lam'6 True f'2 undefined)
 
 lam'7 flag_h' f'3 h'3 = \x' -> let
-  _1 = x' - (1::Int)
   _0 = x' + (1::Int)
+  _1 = x' - (1::Int)
   in (case flag_h' of { True -> (call'3 _0 f'3); False -> h'3 _0 }) * (case flag_h' of { True -> (call'4 _1 f'3); False -> h'3 _1 })
 
 p1_1 = call'2
