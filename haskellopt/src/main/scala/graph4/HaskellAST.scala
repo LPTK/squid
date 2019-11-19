@@ -67,14 +67,15 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     if (ctor.head.isLetter || ctor === "[]" || ctor.head === '(' || ctor === "_") ctor else s"($ctor)"
   
   /** Important: `id` is used to uniquely identify the definition. */
-  class Defn(val ide: Ident, val params: List[Vari], _body: Lazy[Expr]) {
+  class Defn(val ide: Ident, val params: List[Vari], _body: Lazy[Expr], doInline: Opt[Bool]) {
     
     def body = _body.value
     
     def toBeInlined: Bool = !isRecursive && (
-      body.isTrivial ||
+      doInline.contains(true) || !doInline.contains(false) && (body.isTrivial ||
         //false
         body.size <= params.size + 1 // makes sure to inline calls to trivial 'forwarding' defs like `_0(a, b) = a + b`
+      )
     )
     
     /** Note: count recursive calls as free occurrences/free variables. */
@@ -82,8 +83,8 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     def freeVars: Set[Ident] = occurrences.keySet
     def shareableExprs = body.shareableExprs.filterKeys(k => !k.freeVars.exists(params.contains))
     
-    def subs(v: Vari, e: Expr): Defn = if (params.contains(v)) this else new Defn(ide, params, Lazy(body.subs(v, e)))
-    def map(f: Expr => Expr): Defn = new Defn(ide, params, Lazy(body.map(f)))
+    def subs(v: Vari, e: Expr): Defn = if (params.contains(v)) this else new Defn(ide, params, Lazy(body.subs(v, e)), doInline)
+    def map(f: Expr => Expr): Defn = new Defn(ide, params, Lazy(body.map(f)), doInline)
     
     def inline(args: List[Expr]) = {
       require(params.size === args.size)
@@ -102,7 +103,7 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     
     def simplifyRec(implicit caseCtx: Map[(Expr,String),List[Vari]], changed: MutVar[Bool]) = {
       val s = body.simplifyRec // TODO make simplifyRec eq-preserving in case of no changes
-      if (s eq body) this else new Defn(ide, params, Lazy(s))
+      if (s eq body) this else new Defn(ide, params, Lazy(s), doInline)
     }
     
     def stringify: Str = stringify(baseIndent)
@@ -285,6 +286,7 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
       while (changed.!) { changed := false; res = res.simplifyRec(Map.empty, changed) }
       res
     }
+    // TODO for better performance, only use (Vari,String) as caseCtx keys
     def simplifyRec(implicit caseCtx: Map[(Expr,String),List[Vari]], changed: MutVar[Bool]): Expr = this match {
       case _: Inline | _: Vari => this
       case App(lhs, rhs) => App(lhs.simplifyRec, rhs.simplifyRec)
@@ -292,9 +294,23 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
       case Call(d, as) => Call(d, as.map(_.simplifyRec))
       case l @ Let(p, e0, b) => l.copy(p, e0.simplifyRec, b.simplifyRec)
       case LetDefn(d, b) => LetDefn(d.simplifyRec, b.simplifyRec)
-      case Case(scrut, arms) => Case(scrut.simplifyRec, arms.map { case (con,vals,body) =>
-        val newCtx = if (simplifyCases) caseCtx + ((scrut -> con) -> vals) else caseCtx
-        (con, vals, body.simplifyRec(newCtx, changed)) })
+      case Case(scrut, arms) =>
+        caseCtx.iterator.filter(ctx => ctx._1._2 =/= "_" && ctx._1._1 === scrut).toList match {
+          case Nil =>
+            Case(scrut.simplifyRec, arms.map { case (con,vals,body) =>
+              val newCtx = if (simplifyCases) caseCtx + ((scrut -> con) -> vals) else caseCtx
+              (con, vals, body.simplifyRec(newCtx, changed)) })
+          case ((_, ctor), as) :: Nil =>
+            arms.find(_._1 === ctor) match {
+              case None => Bottom("wrong type") // This can happen, for example in `case undefined of { True -> case undefined of { [] -> () } }`
+              case Some((_, vs, body)) =>
+                assert(as.size === vs.size)
+                (vs,as).zipped.foldRight(body) {
+                  case ((a,v), body) => Let(v,a,body,true)
+                }
+            }
+          case xs => lastWords(s"Several ctors: $xs")
+        }
       case CtorField(scrut, ctor, arity, idx) => caseCtx.get(scrut, ctor) match {
         case Some(vals) =>
           changed := true
@@ -340,6 +356,7 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     def apply(lhs: Expr, rhs: Expr): Expr = lhs match {
       case l @ Let(v,e,b) if commuteLets  => l.copy(v,e,App(b,rhs))
       case LetDefn(d,b) if commuteLets => LetDefn(d, App(b,rhs))
+      case bot @ Bottom(_) => bot
       case _ =>
         rhs match {
           case l @ Let(v,e,b) if commuteLets => l.copy(v,e,App(lhs,b))
@@ -504,7 +521,17 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
         new LetDefn(defn, body){}
     }
   }
-  case class Case(scrut: Expr, arms: List[(String,List[Vari],Expr)]) extends Expr
+  abstract case class Case(scrut: Expr, arms: List[(String,List[Vari],Expr)]) extends Expr
+  object Case {
+    def apply(scrut: Expr, arms: List[(String,List[Vari],Expr)]): Expr = arms match {
+      case Nil => Inline("(err \"unreachable ()\")")
+      case (_, Nil, body) :: Nil => body
+      case _ => scrut match {
+        case bot @ Bottom(_) => bot
+        case _ => new Case(scrut: Expr, arms: List[(String,List[Vari],Expr)]){}
+      }
+    }
+  }
   case class CtorField(scrut: Expr, ctor: String, arity: Int, idx: Int) extends Expr
   
   type Binding = (Vari, Expr) \/ Defn
@@ -512,6 +539,16 @@ abstract class HaskellAST(pp: ParameterPassingStrategy) {
     def ident(b: Binding): Ident = b match {
       case Left((v,_)) => v.ide
       case Right(dfn) => dfn.ide
+    }
+  }
+  
+  object Bottom {
+    val Undef = Inline("undefined")
+    def apply(explanation: Str): Expr =
+      if (explanation.isEmpty) Undef else App(Inline("err"), Inline('"'+explanation+'"'))
+    def unapply(arg: Expr): Opt[Str] = arg |>? {
+      case App(Inline("err"), Inline(expl)) if expl.head === '"' && expl.last === '"' => expl.tail.init
+      case Undef => ""
     }
   }
   

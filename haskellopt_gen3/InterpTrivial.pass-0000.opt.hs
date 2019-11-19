@@ -61,7 +61,7 @@ call'12 ds'7 =
 call'3 flag_pgmtail_pgmtail_pgmtail_pgmtail flag_pgmtail_pgmtail_pgmtail flag_pgmtail flag_pgmtail_pgmtail _2 pgmtail'2 pgmtail'3 pgmtail'4 = let
   ret = (call'2 (let (:) _ arg = pgmtail'2 in arg))
   _cε'2 = sel1 (call'3 flag_pgmtail_pgmtail_pgmtail flag_pgmtail_pgmtail False flag_pgmtail (_2 + (1::Int)) (sel1 ret) (sel2 ret) (sel3 ret))
-  _cε' = case flag_pgmtail_pgmtail_pgmtail of { True -> _cε'2; False -> (case flag_pgmtail of { True -> _cε'2; False -> (case flag_pgmtail_pgmtail of { True -> _cε'2; False -> (case (let (:) arg _ = pgmtail'4 in arg) of { () -> _cε'2 }) }) }) }
+  _cε' = case flag_pgmtail_pgmtail_pgmtail of { True -> _cε'2; False -> (case flag_pgmtail of { True -> _cε'2; False -> (case flag_pgmtail_pgmtail of { True -> _cε'2; False -> _cε'2 }) }) }
   in (,) (case flag_pgmtail of { True -> _cε'; False -> (case flag_pgmtail_pgmtail_pgmtail_pgmtail of { True -> _2; False -> (case flag_pgmtail_pgmtail_pgmtail of { True -> _cε'; False -> (case flag_pgmtail_pgmtail of { True -> _cε'; False -> (case pgmtail'3 of { (:) ρ'6 ρ'7 -> _cε'; [] -> _2 }) }) }) }) }) _cε'2
 
 call'5 _fε'3 = (,) _fε'3 _fε'3

@@ -152,10 +152,9 @@ class TestHarness {
     val scheduleStartTime = System.nanoTime
     
     //println(mod.show)
-    val sch =
-      if (go.Graph.debugScheduling) go.Graph.ScheduleDebug debugFor go.Graph.schedule(mod)
-      else go.Graph.schedule(mod)
-      //go.Graph.schedule(mod, naive = true)
+    val sch = go.Graph.ScheduleDebug.setDebugFor(go.Graph.debugScheduling)(go.Graph.schedule(mod, 
+        //naive = true
+      ))
     
     val scheduleEndTime = System.nanoTime
     val scheduleTime = scheduleEndTime-scheduleStartTime

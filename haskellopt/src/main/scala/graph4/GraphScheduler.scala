@@ -152,7 +152,7 @@ abstract class GraphScheduler extends SmartGraphScheduler { self: GraphIR =>
     lazy val modDefStrings: List[Str] = mod.modDefs.map { case (name, ref) =>
       Sdebug(s"Scheduling $name")
       val e = liftRef(ref)(Id)
-      new AST.Defn(bindVal(name), Nil, Lazy(e)).stringify
+      new AST.Defn(bindVal(name), Nil, Lazy(e), None).stringify
     }
     
   }

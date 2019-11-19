@@ -556,7 +556,7 @@ abstract class SmartGraphScheduler extends NewGraphScheduler { self: GraphIR =>
           val body = AST.Let.reorder(defs, ret, debugScheduling) // note: will access the Defn of recursive definitions that are being defined here...
           //val body = AST.Let.multiple(defs, ret)
           body
-        })
+        }, None)
       } //also (res => Sdebug(s"=> ${res.stringify}")) // can cause stack overflow as it forces the body
       
       def show(indent: Int = 0): Str = {

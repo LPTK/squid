@@ -69,6 +69,24 @@ abstract class NewGraphScheduler { self: GraphIR =>
       var parents = mutable.SortedSet.empty[Scope]
       var called = mutable.SortedSet.empty[Scope]
       
+      val transitiveCalls = mutable.Set.empty[Scope]
+      val transitiveCallers = mutable.Set.empty[Scope]
+      var analyzed = false
+      def analyze(callers: Set[Scope]): Unit = {
+        assert(phase == Phase.Analyse)
+        val oldSize = transitiveCallers.size
+        transitiveCallers ++= callers
+        if (!analyzed || transitiveCallers.size > oldSize) {
+          analyzed = true
+          Sdebug(s"Analyzing $this, called by $callers")
+          val newCallers = callers + this
+          newCallers.foreach(_.transitiveCalls ++= called)
+          called.foreach(_.analyze(newCallers))
+        }
+      }
+      def isRecursive = transitiveCalls(this)
+      def toBeInlined = !isRecursive
+      
       val idents: mutable.Map[IRef, AST.Ident] = mutable.Map.empty
       def toIdent(iref: IRef): AST.Ident = idents.getOrElseUpdate(iref, AST.mkIdent(iref._2.name.getOrElse("t")))
       def toVari(ref: IRef): AST.Vari = {
@@ -101,7 +119,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
       }
       case class Lambda(v: Var, scp: Scope) extends Scheduled {
         assert(scp.returns.size === 1)
-        lazy val call = new Call(scp, scp.returns.head).toExpr
+        val call = new Call(scp, scp.returns.head).toExpr
         def toExpr: AST.Expr = {
           assert(scp.returns.size === 1)
           call
@@ -230,9 +248,10 @@ abstract class NewGraphScheduler { self: GraphIR =>
                     scp
                   })
                   scp.parents += this
+                  val lambda = Lambda(lam.param, scp) // TODO just make it a call?
                   updateArguments(scp)
                   scp.processRec(Id, lam.body)
-                  Lambda(lam.param, scp) // TODO just make a call?
+                  lambda
                 case v: Var =>
                   if (lambdaBound contains v) Concrete(v) else Undefined
                 case c: ConcreteNode =>
@@ -300,7 +319,8 @@ abstract class NewGraphScheduler { self: GraphIR =>
         processRec(ictx, ref)
       }
       
-      lazy val toDefn: AST.Defn = Sdebug(s"Defn of $this") thenReturn ScheduleDebug.nestDbg {
+      lazy val toDefn: AST.Defn = Sdebug(s"Defn of $this") thenReturn assert(phase == Phase.Stringify) thenReturn
+      ScheduleDebug.nestDbg {
         val flParams = flagParams.valuesIterator.map(AST.Vari).toList
         new AST.Defn(ident, flParams ++ (params.iterator ++ captures.iterator).map(toVari), Lazy {
           val body = scheduled.iterator.map { case (iref, sch) => Left(toVari(iref),sch.toExpr) }.toList
@@ -324,7 +344,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
           }
           val bodyExpr = AST.Let.reorder(bodyWithCalls, ret)
           lambdaBound.fold[AST.Expr](bodyExpr)(v => AST.Lam(AST.Vari(v), Nil, bodyExpr))
-        })
+        }, None) // Could be Some(toBeInlined)), but it's actually not a great idea to rely on this for scope inlining...
       }
       def returnsTupleCtor: Str = {
         assert(returns.size > 1)
@@ -348,6 +368,14 @@ abstract class NewGraphScheduler { self: GraphIR =>
       override def toString = s"$showName[${Push(cid,payload,Id)}]"
     }
     
+    
+    
+    
+    object Phase extends Enumeration {
+      val Init, Process, Analyse, Stringify = Value
+    }
+    var phase = Phase.Init
+    
     val scopes = mutable.Map.empty[CallId, Scope]
     val lambdaScopes = mutable.Map.empty[Ref, Scope]
     val modDefsWithIdents = mod.modDefs.map { case (nme,df) => (nme,AST.mkIdent(nme),df) }
@@ -360,7 +388,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
     val allPops = mutable.Set.empty[(Var, Instr, Ref)]
     
     val defScopes = modDefsWithIdents.map { case (nme,ide,df) =>
-      Sdebug(s"Processing $nme")
+      Sdebug(s"Creating $nme")
       
       if (!debugScheduling) resetVarPrintingState()
       printVar(ide) // allocate the right 'bare' name for each top-level definition
@@ -383,17 +411,36 @@ abstract class NewGraphScheduler { self: GraphIR =>
     scopes.valuesIterator.foreach(scp => Sdebug(scp.show()))
     Sdebug(s"=== / ===")
     
+    phase = Phase.Process
+    
     defScopes.foreach(_.process()) // Q: not all scopes?
     
-    Sdebug(s"=== ANALYZED SCOPES ===")
+    Sdebug(s"=== PROCESSED SCOPES ===")
     scopes.valuesIterator.foreach(scp => Sdebug(scp.show()))
     Sdebug(s"=== / ===")
+    
+    phase = Phase.Analyse
+    
+    defScopes.foreach(scp => scp.analyze(Set.empty))
+    
+    Sdebug(s"=== ANALYZED SCOPES ===")
+    scopes.valuesIterator.foreach(scp =>
+      Sdebug(s"$scp${if (scp.isRecursive) s" ${Console.BOLD}(REC)${Console.RESET}" else ""}" +
+        s"\n\tcalled by: ${scp.transitiveCallers.mkString(", ")}" +
+        s"\n\tcalls: ${scp.transitiveCalls.mkString(", ")}"))
+    Sdebug(s"=== / ===")
+    
+    phase = Phase.Stringify
+    
+    val isModuleDef = defScopes.toSet
     
     val modDefStrings: List[Str] = {
       scopes.valuesIterator
         //.filterNot(lambdaScopes.valuesIterator.toSet)
+        //.filter(scp => !scp.toBeInlined || isModuleDef(scp))
         .map(_.toDefn.stringify).toList // TODO rm those to be inlined
     }
+    
     
   }
   
