@@ -42,6 +42,13 @@ class BenchTests extends FunSuite {
     )
   )
   
+  test("AvgBench") (
+    TestHarness("AvgBench",
+    )(
+      check('avg, List(1,3,2,0))(1),
+    )
+  )
+  
   test("MaxPEBench") (
     // FIXME when `max_mod` is not explicitly typed: _0 = ($p1Real) ($p1Integral)
     TestHarness("MaxPEBench",
@@ -55,6 +62,7 @@ class BenchTests extends FunSuite {
   
   // Note: its sibling FoldingPolyBench can be optimized, but generates a program where type inference fails due to the forall in Control.Foldl
   test("FoldingBench") (
+    // FIXME use the `go` version of `foldl'`, which currently causes a BadComparison in scheduling...
     TestHarness("FoldingBench",
       multiStepReductions = false, // FIXME paths/references seem to get messed up otherwise...
     )(

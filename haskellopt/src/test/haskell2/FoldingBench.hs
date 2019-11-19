@@ -32,10 +32,15 @@ fold_F :: FoldP a b -> [a] -> b
 fold_F ((,,) step begin done) xs = done (foldl' step begin xs)
 
 foldl' :: (b -> a -> b) -> b -> [a] -> b
+-- TOOD use `go` version below
 foldl' f z []     = z
 foldl' f z (x:xs) = let z' = z `f` x 
                     -- in seq z' $ foldl' f z' xs
                     in foldl' f z' xs
+-- foldl' f = go where
+--     go z []     = z
+--     go z (x:xs) = let z' = z `f` x
+--                   in go z' xs
 
 -- sum :: Num a => Fold a a
 sum_F :: FoldI Int Int

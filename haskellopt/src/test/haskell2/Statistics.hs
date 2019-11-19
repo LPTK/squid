@@ -25,3 +25,9 @@ lastMaybe (x : xs) = lastMaybe xs
 lastWeird [] = Nothing
 lastWeird (x : []) = Just x
 lastWeird (x : xs) = case lastWeird xs of { Just y -> Just y; Nothing -> Just 666 }
+
+sum_cnt :: [Int] -> (Int, Int)
+sum_cnt [] = (0, 0)
+sum_cnt (x : xs) = let (s, c) = sum_cnt xs in (s + x, c + 1)
+
+avg ls = let (s, c) = sum_cnt ls in s `div` c
