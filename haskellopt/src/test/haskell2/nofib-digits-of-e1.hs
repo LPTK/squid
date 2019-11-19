@@ -16,13 +16,15 @@ hash = foldl' (\acc c -> ord c + acc*31) 0
 
 -- err() = err()
 
-type ContFrac = [Integer]
+-- type ContFrac = [Integer]
+type ContFrac = [Int]
 
 eContFrac :: ContFrac
 eContFrac = 2:aux 2 where aux n = 1:n:1:aux (n+2)
 
 -- ratTrans (a,b,c,d) x: compute (a + bx)/(c+dx) as a continued fraction
-ratTrans :: (Integer,Integer,Integer,Integer) -> ContFrac -> ContFrac
+-- ratTrans :: (Integer,Integer,Integer,Integer) -> ContFrac -> ContFrac
+ratTrans :: (Int,Int,Int,Int) -> ContFrac -> ContFrac
 -- Output a digit if we can
 ratTrans (a,b,c,d) xs |
   ((signum c == signum d) || (abs c < abs d)) && -- No pole in range
@@ -32,12 +34,14 @@ ratTrans (a,b,c,d) xs |
 ratTrans (a,b,c,d) (x:xs) = ratTrans (b,a+x*b,d,c+x*d) xs
 -- ratTrans _ _ = err()
 
-takeDigits :: Int -> ContFrac -> [Integer]
+-- takeDigits :: Int -> ContFrac -> [Integer]
+takeDigits :: Int -> ContFrac -> [Int]
 -- takeDigits 0 _ = []
 takeDigits n _ | n == 0 = []
 takeDigits n (x:xs) = x:takeDigits (n-1) (ratTrans (10,0,0,1) xs)
 
-e :: Int -> [Integer]
+-- e :: Int -> [Integer]
+e :: Int -> [Int]
 e n = takeDigits n eContFrac
 
 -- main = replicateM_ 100 $ do
@@ -49,6 +53,9 @@ main = do
 {-
 ghc -O2 nofib-digits-of-e1.hs && ./nofib-digits-of-e1
 ghc -O2 nofib-digits-of-e1.pass-0000.opt.hs && ./nofib-digits-of-e1.pass-0000.opt
+
+# EDIT: the following was when using Integer... but the generated code used Int!
+# The running times are comparable once both use Int...
 
 benchmarking main
 time                 54.49 ms   (52.98 ms .. 55.50 ms)
