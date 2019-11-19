@@ -3,7 +3,7 @@ package graph4
 import squid.utils._
 import scala.collection.mutable
 
-class GraphIR(val useNewScheduler: Bool) extends GraphDefs {
+class GraphIR(val useNewScheduler: Bool, val multiStepReductions: Bool) extends GraphDefs {
   
   val debugScheduling: Bool = false
   //val debugScheduling: Bool = true
@@ -38,7 +38,7 @@ class GraphIR(val useNewScheduler: Bool) extends GraphDefs {
   /** Determines whether multiple reductions are performed with each simplification pass.
     * If logging of the rewritten graphs is enabled, doing only one step at a time will be much slower,
     * but it will make things easier to understand and debug. */
-  val multiStepReductions = !debugRewriting
+  //val multiStepReductions = !debugRewriting
   //val multiStepReductions = false
   
   /** Setting this to `true` sounds like a good idea,

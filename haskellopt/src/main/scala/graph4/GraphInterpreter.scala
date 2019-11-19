@@ -56,13 +56,14 @@ abstract class GraphInterpreter extends GraphRewriting { self: GraphIR =>
           case ModuleRef("GHC.Num","-") => intBinOp(_ - _)
           case ModuleRef("GHC.Num","*") => intBinOp(_ * _)
           case ModuleRef("GHC.Real","mod") => intBinOp(_ % _)
+          case ModuleRef("GHC.Real","div") => intBinOp(_ / _)
           case ModuleRef("GHC.Real","^") => intBinOp(scala.math.pow(_, _).toInt)
           case ModuleRef("GHC.Classes",">") => Fun(rhs => Bool(arg.value.int > rhs.value.int))
           case ModuleRef("GHC.Types","I#") => arg
-          case ModuleRef("GHC.Types","C#") => arg.value match {
+          case ModuleRef("GHC.Types","C#") => arg.value |>! {
             case Const(CharLit(false,c)) => Const(CharLit(true,c))
           }
-          case ModuleRef("GHC.CString","unpackCString#") => arg.value match {
+          case ModuleRef("GHC.CString","unpackCString#") => arg.value |>! {
             case Const(StrLit(false,str)) => lift(str)
           }
           case ModuleRef("GHC.List","take") => Fun(rhs =>
@@ -80,7 +81,7 @@ abstract class GraphInterpreter extends GraphRewriting { self: GraphIR =>
               case Ctor("[]", Nil) => rhs
             })
           case ModuleRef("GHC.Classes","&&") => Fun(rhs => Bool(arg.value.bool && rhs.value.bool))
-          case ModuleRef("GHC.Classes","==") => arg.value match {
+          case ModuleRef("GHC.Classes","==") => arg.value |>! {
             case Const(_: IntLit) => Fun(rhs => Bool(arg.value.int === rhs.value.int))
             case Const(_: CharLit) => Fun(rhs => Bool(arg.value.char === rhs.value.char))
           }
@@ -88,6 +89,8 @@ abstract class GraphInterpreter extends GraphRewriting { self: GraphIR =>
           case ModuleRef("GHC.Base","$") => arg
           case ModuleRef("GHC.Types",":") => Fun(rhs => Ctor(":", arg :: rhs :: Nil))
           case ModuleRef("GHC.Tuple","(,)") => Fun(rhs => Ctor("(,)", arg :: rhs :: Nil))
+          case ModuleRef("GHC.Tuple","(,,)") => Fun(x2 => Fun(x3 => Ctor("(,,)", arg :: x2 :: x3 :: Nil)))
+          case ModuleRef("Control.Foldl","Fold") => Fun(x2 => Fun(x3 => Ctor("Fold", arg :: x2 :: x3 :: Nil)))
           case KnownUnaryCtor(nme) => Ctor(nme, arg :: Nil)
           case _ => super.app(arg)
         }

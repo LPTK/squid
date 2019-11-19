@@ -5,31 +5,29 @@
 module Main where
 
 import Criterion.Main
+import Control.Foldl
 
+-- data Fold a b = forall x. Fold ((x -> a -> x), x, (x -> b))
 
--- Monomorphized Control.Foldl for integers and pairs to get around GHC type inference problems in generated code
+pure_F b = Fold (\() _ -> ()) () (\() -> b)
 
-type FoldI a b = ((Int -> a -> Int), Int, (Int -> b))
--- pattern FoldI a b c = (a, b, c)
+-- pattern Pair a b = (a, b) -- in the actual library, this is a strict Pair constructor with bangs
 
-type FoldP a b = (((Int,Int) -> a -> (Int,Int)), (Int,Int), ((Int,Int) -> b))
--- pattern FoldP a b c = (a, b, c)
-
-ap_F :: FoldI x (a -> b) -> FoldI x a -> FoldP x b
-((,,) stepL beginL doneL) `ap_F` ((,,) stepR beginR doneR) =
+ap_F :: Fold x (a -> b) -> Fold x a -> Fold x b
+(Fold stepL beginL doneL) `ap_F` (Fold stepR beginR doneR) =
     let step ((,) xL xR) a = (,) (stepL xL a) (stepR xR a)
         begin = (,) beginL beginR
         done ((,) xL xR) = doneL xL (doneR xR)
-    in  (,,) step begin done
+    in  Fold step begin done
 
-fmap_F f ((,,) step begin done) = (,,) step begin (\x -> f (done x)) -- (f . done)
+fmap_F f (Fold step begin done) = Fold step begin (\x -> f (done x)) -- (f . done)
 
 -- fold :: Foldable f => Fold a b -> f a -> b
 -- fold (Fold step begin done) as = F.foldr cons done as begin
 --   where
 --     cons a k x = k $! step x a
-fold_F :: FoldP a b -> [a] -> b
-fold_F ((,,) step begin done) xs = done (foldl' step begin xs)
+fold_F :: Fold a b -> [a] -> b
+fold_F (Fold step begin done) xs = done (foldl' step begin xs)
 
 foldl' :: (b -> a -> b) -> b -> [a] -> b
 foldl' f z []     = z
@@ -38,29 +36,25 @@ foldl' f z (x:xs) = let z' = z `f` x
                     in foldl' f z' xs
 
 -- sum :: Num a => Fold a a
-sum_F :: FoldI Int Int
-sum_F = (,,) (+) 0 id
+sum_F :: Fold Int Int
+sum_F = Fold (+) 0 id
 
 -- genericLength :: Num b => Fold a b
-length_F :: FoldI a Int
-length_F = (,,) (\n _ -> n + 1) 0 id
-
-
-
-
+length_F :: Fold a Int
+length_F = Fold (\n _ -> n + 1) 0 id
 
 avg_F xs = let
         f = (,) `fmap_F` sum_F `ap_F` length_F
         (s,l) = fold_F f xs
-    in s `div` l
+    in s + l
 
 avg_manual_tr :: [Int] -> Int
 avg_manual_tr xs = go 0 0 xs where
-    go s l [] = s `div` l
+    go s l [] = s + l
     go s l (x : xs) = go (s + x) (l + 1) xs
 
 avg_manual :: [Int] -> Int
-avg_manual xs = su `div` le where
+avg_manual xs = su + le where
     (su, le) = go xs
     go [] = (0, 0)
     go (x : xs) =

@@ -64,11 +64,14 @@ class GraphLoader[G <: GraphIR](val Graph: G) {
         }).mkRef
       }
       def ELit(Lit: Lit): Expr = Lit.mkRefNamed("κ")
+      
+      def isInstanceName(nme: Str): Bool = nme.contains("$f") || nme.contains("$p") // TODO make more robust
+      
       def EApp(e0: Expr, e1: Expr): Expr = e1.node match {
         case TypeBinding => e0
         case Control(_,Ref(TypeBinding)) => e0
-        case ModuleRef(mod,nme) if nme.contains("$f") => e0
-        case Control(_,Ref(ModuleRef(mod,nme))) if nme.contains("$f") => e0 // TODO more robust?
+        case ModuleRef(mod,nme) if isInstanceName(nme) => e0
+        case Control(_,Ref(ModuleRef(mod,nme))) if isInstanceName(nme) => e0
         case _ => e0.node match {
           case ModuleRef("GHC.Num", "fromInteger") if useOnlyIntLits => e1
           case ModuleRef("Control.Exception.Base", "patError") => Bottom.mkRef
@@ -156,6 +159,7 @@ class GraphLoader[G <: GraphIR](val Graph: G) {
       def EType(ty: Type): Expr = DummyRead
       
       def Alt(altCon: AltCon, altBinders: Seq[Binder], altRHS: => Expr): Alt = {
+        //println(altCon,altBinders.size,altBinders)
         (altCon, () => altRHS, r => altBinders.zipWithIndex.map(b => b._1.binderId ->
           CtorField(
             r,

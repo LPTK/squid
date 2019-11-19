@@ -105,7 +105,9 @@ abstract class Interpreter {
           case Arr(IntElem(0), StringElem(n)) => AltDataCon(n)
           case Arr(IntElem(1), l) => AltLit(Lit(l))
           case Arr(IntElem(2)) => AltDefault
-        }, altBinders.map(Binder), Expr(altRHS))
+        }, altBinders.filter {
+          case Arr(IntElem(_), Arr(IntElem(n), _ @ _*)) => n === 0 // bindings with n === 1 are type bindings...
+        }.map(Binder), Expr(altRHS))
       case Arr(xs@_*) =>
         println(elt.getClass)
         println(xs.size)

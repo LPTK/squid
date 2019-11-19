@@ -50,6 +50,20 @@ class BenchTests extends FunSuite {
     )
   )
   
+  val ls = List(1,2,3,4)
+  val lsAvg = ls.sum/ls.size
+  
+  // Note: its sibling FoldingPolyBench can be optimized, but generates a program where type inference fails due to the forall in Control.Foldl
+  test("FoldingBench") (
+    TestHarness("FoldingBench",
+      multiStepReductions = false, // FIXME paths/references seem to get messed up otherwise...
+    )(
+      check('avg_F, ls)(lsAvg),
+      check('avg_manual, ls)(lsAvg),
+      //check('avg_manual, Nil)(0),
+    )
+  )
+  
   test("nofib-queens") (
     // Notes about the old scheduler (SmartScheduler):
     //   It raised BadComparison with a crazy scope number: graph4.GraphDefs$BadComparison: <rec'303889>(ds'32:d↑[↓]) `;` β_2e = [from'13:8↑[↓]+1]ψ_30

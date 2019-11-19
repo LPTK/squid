@@ -25,10 +25,10 @@ class TestHarness {
   //val slowDownGraphPrints = true
   
   
-  def mkGraph =
-    new GraphIR(useNewScheduler)
+  //def mkGraph =
+  //  new GraphIR(useNewScheduler, multiStepReductions)
   
-  def pipeline(filePath: Path, compileResult: Bool, executeResult: Bool, dumpGraph: Bool, checks: Seq[CheckDSL], interpret: Bool, schedule: Bool, prefixFilter: Str): Unit = {
+  def pipeline(filePath: Path, compileResult: Bool, executeResult: Bool, dumpGraph: Bool, checks: Seq[CheckDSL], interpret: Bool, schedule: Bool, prefixFilter: Str, multiStepReductions: Bool): Unit = {
     
     val writePath_hs = genFolder/RelPath(filePath.baseName+".opt.hs")
     if (exists(writePath_hs)) rm(writePath_hs)
@@ -38,7 +38,8 @@ class TestHarness {
     
     val loadingStartTime = System.nanoTime
     
-    val go = new GraphLoader(mkGraph)
+    val graph = new GraphIR(useNewScheduler, multiStepReductions)
+    val go = new GraphLoader(graph)
     val mod = go.loadFromDump(filePath, prefixFilter)
     
     val Inter = new go.Graph.Interpreter
@@ -252,6 +253,7 @@ class TestHarness {
             dumpGraph: Bool = false,
             exec: Bool = false,
             schedule: Bool = true,
+            multiStepReductions: Bool = true,
             prefixFilter: Str = ""
            )(checks: CheckDSL*): Unit = {
     import ghcdump._
@@ -281,7 +283,8 @@ class TestHarness {
       if (exists(execPath)) os.remove(execPath)
       pipeline(dumpFolder/(testName+s".pass-$idxStr.cbor"),
         compileResult, compileResult && executeResult,
-        dumpGraph && (idxStr === "0000"), checks, interpret = exec, schedule = schedule, prefixFilter = prefixFilter)
+        dumpGraph && (idxStr === "0000"), checks, interpret = exec, schedule = schedule, prefixFilter = prefixFilter,
+        multiStepReductions)
       if (compileResult && exec) %%(execPath)(pwd)
     }
     

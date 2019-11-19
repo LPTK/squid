@@ -217,7 +217,7 @@ class GraphRewriting extends GraphScheduler { self: GraphIR =>
               mod.fieldReductions += 1
               
               val ctrl = if (ctorName === ctor.defName) Some {
-                assert(argsRev.size === ari)
+                assert(argsRev.size === ari, (ctorName, ari, argsRev))
                 val (instr, rightField) = argsRev.reverseIterator.drop(idx).next
                 Control(instr, rightField)(ri,
                   re min ri)

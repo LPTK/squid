@@ -140,8 +140,6 @@ abstract class NewGraphScheduler { self: GraphIR =>
               mkSelection(scp, call, idx)
           }
         }
-        private def orUndefined(arg: => AST.Expr): AST.Expr =
-          try arg catch { case _: BadComparison => Undefined.toExpr }
         override def str(indent: Int) = s"${scp.showName}(${
             scp.params.iterator.map(scp.toArg).map(printRef).mkString(", ")
             //scp.params.iterator.map(p => orUndefined(toVari(scp.toArg(p))).stringify).mkString(", ")
@@ -170,6 +168,9 @@ abstract class NewGraphScheduler { self: GraphIR =>
       val processed = mutable.Set.empty[IRef]
       
       def processRec(iref: IRef): Unit = processRec(iref._1, iref._2)
+      
+      private def orUndefined(arg: => AST.Expr): AST.Expr =
+        try arg catch { case _: BadComparison => Undefined.toExpr }
       
       def processRec(ictx: Instr, ref: Ref): Unit = {
         val iref = ictx->ref
@@ -308,7 +309,7 @@ abstract class NewGraphScheduler { self: GraphIR =>
               val flArgs = scp.flagParams.valuesIterator.map(flagArgs).toList
               val normalArgs = (
                 scp.params.iterator.map(scp.toArg).map(toVari) ++
-                //scp.params.iterator.map(p => orUndefined(scp.toArg(p)|>toVari) ++
+                //scp.params.iterator.map(p => orUndefined(scp.toArg(p)|>toVari)) ++
                 scp.captures.iterator.map(scp.toCaptureArg).map(toVari)
                 //scp.captures.iterator.map(p => orUndefined(scp.toCaptureArg(p)|>toVari))
               ).toList
