@@ -116,6 +116,10 @@ abstract class Interpreter {
         ???
     })
     case Arr(IntElem(8), ty) => EType(ty)
+    case Arr(IntElem(9), ty) =>
+    // ^ It seems recent versions of ghc-dump-core yield these new node forms, which we can apparently ignore
+      // println(s"IGNORE $ty")
+      EType(ty)
     case Arr(xs@_*) => 
       println(xs.size)
       println(xs)

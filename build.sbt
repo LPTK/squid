@@ -13,7 +13,7 @@
 // limitations under the License.
 
 val scala211Version = "2.11.12"
-val scala212Version = "2.12.8"
+val scala212Version = "2.12.19"
 
 val paradiseVersion = "2.1.0"
 val squidVersion = "0.3.2-SNAPSHOT"
@@ -37,7 +37,7 @@ lazy val commonSettings = Seq(
   parallelExecution in Test := false,
   resolvers += Resolver.sonatypeRepo("snapshots"),
   resolvers += Resolver.sonatypeRepo("releases"),
-  addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
+  // addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
   unmanagedSources in Compile := (unmanagedSources in Compile).value.filterNot(_.getPath.contains("_perso")),
   libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.5",
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test",
